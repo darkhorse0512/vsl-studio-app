@@ -8,10 +8,13 @@ import {
   getSourceFileUrl,
   listAssets,
   renameProject,
+  updateProjectSettings,
 } from '../lib/api'
 import { useToast } from '../context/ToastContext'
 import { ASSET_LABEL, PROJECT_STATUS, cn, formatDateTime, readingMinutes, timeAgo, wordCount } from '../lib/utils'
+import PageHeader from '../components/PageHeader'
 import AnalysisPanel from '../components/AnalysisPanel'
+import GenerationSettings, { isEmptySettings } from '../components/GenerationSettings'
 import CodeStudio from '../components/CodeStudio'
 import Button from '../components/ui/Button'
 import { Input } from '../components/ui/Form'
@@ -19,7 +22,9 @@ import { Badge, Banner, Dot, EmptyState, LoadingScreen } from '../components/ui/
 import Modal, { ConfirmDialog } from '../components/ui/Modal'
 import {
   ArrowLeft,
+  Check,
   Download,
+  Eye,
   FileText,
   Layers,
   Puzzle,
@@ -51,6 +56,7 @@ export default function ProjectDetail() {
   const [generating, setGenerating] = useState({ sales_page: false, quiz: false })
   const [selectedVersion, setSelectedVersion] = useState({ sales_page: null, quiz: null })
 
+  const [savingSettings, setSavingSettings] = useState(false)
   const [renameOpen, setRenameOpen] = useState(false)
   const [renameValue, setRenameValue] = useState('')
   const [renaming, setRenaming] = useState(false)
@@ -133,6 +139,23 @@ export default function ProjectDetail() {
     }
   }
 
+  const handleSaveSettings = async (settings) => {
+    setSavingSettings(true)
+    try {
+      const updated = await updateProjectSettings(id, settings)
+      setProject((current) => ({ ...current, generation_settings: updated.generation_settings }))
+      toast.success(
+        isEmptySettings(settings)
+          ? 'Target product cleared - assets will follow the VSL again.'
+          : 'Target product saved. Regenerate both assets to apply it.',
+      )
+    } catch (error) {
+      toast.error(error.message)
+    } finally {
+      setSavingSettings(false)
+    }
+  }
+
   const handleRename = async () => {
     if (!renameValue.trim()) return
     setRenaming(true)
@@ -186,6 +209,16 @@ export default function ProjectDetail() {
     return list.find((asset) => asset.id === selectedVersion[type]) ?? list[0]
   }
 
+  const settings = project?.generation_settings ?? {}
+
+  // Assets created before the current target-product settings still describe
+  // the old offer - surface that rather than letting the two drift apart.
+  const hasStaleAssets = useMemo(() => {
+    if (isEmptySettings(settings) || !settings.updated_at) return false
+    const savedAt = new Date(settings.updated_at)
+    return assets.some((asset) => new Date(asset.created_at) < savedAt)
+  }, [assets, settings])
+
   if (loading) return <LoadingScreen label="Loading project…" />
 
   if (loadError) {
@@ -207,37 +240,28 @@ export default function ProjectDetail() {
   const busy = analyzing || project.status === 'analyzing'
 
   return (
-    <div className="space-y-7">
-      {/* Header ------------------------------------------------------- */}
-      <div>
-        <Button to="/app" variant="ghost" size="sm" className="-ml-2 mb-4">
-          <ArrowLeft className="h-4 w-4" />
-          Projects
-        </Button>
-
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
-                {project.name}
-              </h1>
-              <Badge tone={busy ? 'info' : status.tone}>
-                <Dot tone={busy ? 'info' : status.tone} />
-                {busy ? 'Analysing' : status.label}
-              </Badge>
-            </div>
-
-            <p className="mt-2 text-sm text-ink-500">
-              {project.source_type === 'file' && project.source_filename
-                ? project.source_filename
-                : 'Pasted text'}{' '}
-              · {wordCount(project.vsl_text).toLocaleString()} words · created{' '}
-              {timeAgo(project.created_at)}
-              {project.analyzed_at && ` · analysed ${timeAgo(project.analyzed_at)}`}
-            </p>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
+    <div className="space-y-6">
+      <PageHeader
+        back={{ to: '/app', label: 'All projects' }}
+        title={project.name}
+        badge={
+          <Badge tone={busy ? 'info' : status.tone}>
+            <Dot tone={busy ? 'info' : status.tone} />
+            {busy ? 'Analysing' : status.label}
+          </Badge>
+        }
+        meta={
+          <>
+            {project.source_type === 'file' && project.source_filename
+              ? project.source_filename
+              : 'Pasted text'}{' '}
+            · {wordCount(project.vsl_text).toLocaleString()} words · created{' '}
+            {timeAgo(project.created_at)}
+            {project.analyzed_at ? ` · analysed ${timeAgo(project.analyzed_at)}` : ''}
+          </>
+        }
+        actions={
+          <>
             <Button
               variant="secondary"
               size="sm"
@@ -254,12 +278,17 @@ export default function ProjectDetail() {
                 Re-analyse
               </Button>
             )}
-            <Button variant="ghost" size="sm" onClick={() => setDeleteOpen(true)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              aria-label="Delete project"
+              onClick={() => setDeleteOpen(true)}
+            >
               <Trash className="h-4 w-4" />
             </Button>
-          </div>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {/* Analysis gate ------------------------------------------------ */}
       {!isAnalyzed && (
@@ -308,7 +337,7 @@ export default function ProjectDetail() {
       )}
 
       {/* Tabs --------------------------------------------------------- */}
-      <div className="flex gap-1 overflow-x-auto border-b border-ink-800 scrollbar-none">
+      <div className="sticky top-16 z-30 -mx-4 flex gap-1 overflow-x-auto border-b border-ink-800 bg-ink-950/85 px-4 backdrop-blur-xl scrollbar-none sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         {TABS.map((item) => {
           const locked = item.id !== 'source' && item.id !== 'analysis' && !isAnalyzed
           return (
@@ -346,6 +375,14 @@ export default function ProjectDetail() {
       {tab === 'analysis' &&
         (isAnalyzed ? (
           <>
+            <GenerationSettings
+              settings={settings}
+              analysis={project.analysis}
+              saving={savingSettings}
+              onSave={handleSaveSettings}
+              hasAssets={hasStaleAssets}
+            />
+
             <div className="grid gap-4 sm:grid-cols-2">
               <GenerateCard
                 type="sales_page"
@@ -362,6 +399,7 @@ export default function ProjectDetail() {
                 icon={Puzzle}
                 title="Interactive quiz"
                 description="Multi-step quiz with weighted scoring, a personalised result and a CTA into the same offer."
+                accent
                 count={byType.quiz.length}
                 loading={generating.quiz}
                 onGenerate={() => handleGenerate('quiz')}
@@ -468,26 +506,57 @@ export default function ProjectDetail() {
 /* Pieces                                                              */
 /* ------------------------------------------------------------------ */
 
-function GenerateCard({ icon: IconComponent, title, description, count, loading, onGenerate, onOpen }) {
+function GenerateCard({
+  icon: IconComponent,
+  title,
+  description,
+  count,
+  loading,
+  onGenerate,
+  onOpen,
+  accent = false,
+}) {
   return (
-    <div className="card card-hover flex flex-col p-6">
-      <div className="flex items-start justify-between">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-500/15 text-brand-300">
-          <IconComponent className="h-5.5 w-5.5" />
-        </div>
-        {count > 0 && <Badge tone="success">{count} generated</Badge>}
+    <div className="card card-hover relative flex flex-col overflow-hidden p-6">
+      <span
+        aria-hidden="true"
+        className={cn(
+          'absolute -right-16 -top-16 h-40 w-40 rounded-full blur-3xl transition-opacity',
+          accent ? 'bg-accent-500/10' : 'bg-brand-500/10',
+        )}
+      />
+
+      <div className="relative flex items-start justify-between gap-3">
+        <span
+          className={cn(
+            'flex h-12 w-12 items-center justify-center rounded-xl border',
+            accent
+              ? 'border-accent-500/25 bg-accent-500/12 text-accent-400'
+              : 'border-brand-500/25 bg-brand-500/12 text-brand-300',
+          )}
+        >
+          <IconComponent className="h-6 w-6" />
+        </span>
+
+        {count > 0 && (
+          <Badge tone="success">
+            <Check className="h-3.5 w-3.5" />
+            {count === 1 ? '1 version' : `${count} versions`}
+          </Badge>
+        )}
       </div>
 
-      <h3 className="mt-4 font-semibold text-white">{title}</h3>
-      <p className="mt-1.5 flex-1 text-sm leading-relaxed text-ink-400">{description}</p>
+      <h3 className="relative mt-4 text-[15px] font-semibold text-white">{title}</h3>
+      <p className="relative mt-1.5 flex-1 text-sm leading-relaxed text-ink-400">{description}</p>
 
-      <div className="mt-5 flex gap-2">
+      <div className="relative mt-5 flex flex-wrap gap-2">
         <Button onClick={onGenerate} loading={loading} size="sm">
           <Sparkles className="h-4 w-4" />
           {count > 0 ? 'Generate again' : 'Generate'}
         </Button>
         {count > 0 && (
           <Button variant="secondary" size="sm" onClick={onOpen}>
+            <Eye className="h-4 w-4" />
             Open
           </Button>
         )}

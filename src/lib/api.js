@@ -90,7 +90,7 @@ export async function getProject(id) {
   const { data, error } = await supabase
     .from('projects')
     .select(
-      'id, user_id, name, status, source_type, source_filename, storage_path, vsl_text, analysis, analysis_model, analyzed_at, error_message, created_at, updated_at',
+      'id, user_id, name, status, source_type, source_filename, storage_path, vsl_text, analysis, analysis_model, analyzed_at, error_message, generation_settings, created_at, updated_at',
     )
     .eq('id', id)
     .maybeSingle()
@@ -131,6 +131,25 @@ export async function renameProject(id, name) {
       .update({ name: name.trim() })
       .eq('id', id)
       .select('id, name')
+      .single(),
+  )
+}
+
+/**
+ * Target product overrides, shared by every asset of the project so the
+ * sales page and the quiz are always adapted the same way.
+ * An `updated_at` stamp is stored alongside them so the UI can flag assets
+ * that were generated before the current settings.
+ */
+export async function updateProjectSettings(id, settings) {
+  const payload = { ...settings, updated_at: new Date().toISOString() }
+
+  return unwrap(
+    await supabase
+      .from('projects')
+      .update({ generation_settings: payload })
+      .eq('id', id)
+      .select('id, generation_settings')
       .single(),
   )
 }
