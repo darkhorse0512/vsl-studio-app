@@ -17,6 +17,7 @@ import AnalysisPanel from '../components/AnalysisPanel'
 import GenerationSettings, { isEmptySettings } from '../components/GenerationSettings'
 import CodeStudio from '../components/CodeStudio'
 import Button from '../components/ui/Button'
+import Select from '../components/ui/Select'
 import { Input } from '../components/ui/Form'
 import { Badge, Banner, Dot, EmptyState, LoadingScreen } from '../components/ui/Feedback'
 import Modal, { ConfirmDialog } from '../components/ui/Modal'
@@ -598,18 +599,17 @@ function AssetPanel({ type, assets, active, projectName, loading, onGenerate, on
 
         <div className="flex flex-wrap items-center gap-2">
           {assets.length > 1 && (
-            <select
+            <Select
               value={active?.id}
-              onChange={(event) => onSelect(event.target.value)}
-              aria-label="Select version"
-              className="h-9 rounded-lg border border-ink-700 bg-ink-950/60 px-3 text-sm text-ink-200 focus:border-brand-500 focus:outline-none"
-            >
-              {assets.map((asset) => (
-                <option key={asset.id} value={asset.id}>
-                  Version {asset.version} — {timeAgo(asset.created_at)}
-                </option>
-              ))}
-            </select>
+              onChange={onSelect}
+              align="right"
+              className="w-56"
+              options={assets.map((asset) => ({
+                value: asset.id,
+                label: `Version ${asset.version}`,
+                description: timeAgo(asset.created_at),
+              }))}
+            />
           )}
           <Button variant="secondary" size="sm" onClick={onGenerate} loading={loading}>
             <Refresh className="h-4 w-4" />

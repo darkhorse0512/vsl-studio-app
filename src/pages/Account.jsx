@@ -5,6 +5,7 @@ import { updateProfile } from '../lib/api'
 import { SUPPORT_EMAIL } from '../lib/supabase'
 import { formatDate } from '../lib/utils'
 import PageHeader from '../components/PageHeader'
+import ThemePicker from '../components/ThemePicker'
 import Button from '../components/ui/Button'
 import { Input, PasswordInput } from '../components/ui/Form'
 import { Badge, Banner } from '../components/ui/Feedback'
@@ -92,6 +93,15 @@ export default function Account() {
             </div>
           </div>
         </div>
+
+        {/* Appearance --------------------------------------------------- */}
+        <section className="card p-6">
+          <h2 className="font-semibold text-white">Appearance</h2>
+          <p className="mb-5 mt-1 text-sm text-ink-500">
+            Applies across the whole app and is remembered on this device.
+          </p>
+          <ThemePicker />
+        </section>
 
         {/* Profile ------------------------------------------------------ */}
         <form onSubmit={handleProfileSubmit} className="card space-y-5 p-6">

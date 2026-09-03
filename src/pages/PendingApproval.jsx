@@ -43,7 +43,7 @@ export default function PendingApproval() {
   const suspended = profile?.status === 'suspended'
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center px-5 py-12">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-5 py-12">
       <div className="surface-grid pointer-events-none absolute inset-0 opacity-25 [mask-image:radial-gradient(ellipse_at_center,black,transparent_70%)]" />
       <div className="pointer-events-none absolute left-1/2 top-0 h-96 w-[700px] -translate-x-1/2 rounded-full bg-brand-600/15 blur-[120px]" />
 

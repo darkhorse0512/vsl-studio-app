@@ -1,5 +1,6 @@
 import { Suspense, lazy, useEffect } from 'react'
 import { Route, Routes, useLocation } from 'react-router-dom'
+import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider } from './context/AuthContext'
 import { ToastProvider } from './context/ToastContext'
 import ProtectedRoute, { GuestRoute } from './components/ProtectedRoute'
@@ -37,60 +38,62 @@ function ScrollToTop() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <ToastProvider>
-        <ConfigWarning />
-        <ScrollToTop />
+    <ThemeProvider>
+      <AuthProvider>
+        <ToastProvider>
+          <ConfigWarning />
+          <ScrollToTop />
 
-        <Suspense fallback={<LoadingScreen />}>
-          <Routes>
-            {/* Public marketing site */}
-            <Route element={<MarketingLayout />}>
-              <Route index element={<Landing />} />
-            </Route>
-
-            {/* Authentication */}
-            <Route
-              path="/login"
-              element={
-                <GuestRoute>
-                  <Login />
-                </GuestRoute>
-              }
-            />
-            <Route
-              path="/signup"
-              element={
-                <GuestRoute>
-                  <Signup />
-                </GuestRoute>
-              }
-            />
-            <Route
-              path="/forgot-password"
-              element={
-                <GuestRoute>
-                  <ForgotPassword />
-                </GuestRoute>
-              }
-            />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/pending" element={<PendingApproval />} />
-
-            {/* Dashboard - requires an approved account */}
-            <Route path="/app" element={<ProtectedRoute />}>
-              <Route element={<AppLayout />}>
-                <Route index element={<Dashboard />} />
-                <Route path="new" element={<NewProject />} />
-                <Route path="projects/:id" element={<ProjectDetail />} />
-                <Route path="account" element={<Account />} />
+          <Suspense fallback={<LoadingScreen />}>
+            <Routes>
+              {/* Public marketing site */}
+              <Route element={<MarketingLayout />}>
+                <Route index element={<Landing />} />
               </Route>
-            </Route>
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
-      </ToastProvider>
-    </AuthProvider>
+              {/* Authentication */}
+              <Route
+                path="/login"
+                element={
+                  <GuestRoute>
+                    <Login />
+                  </GuestRoute>
+                }
+              />
+              <Route
+                path="/signup"
+                element={
+                  <GuestRoute>
+                    <Signup />
+                  </GuestRoute>
+                }
+              />
+              <Route
+                path="/forgot-password"
+                element={
+                  <GuestRoute>
+                    <ForgotPassword />
+                  </GuestRoute>
+                }
+              />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/pending" element={<PendingApproval />} />
+
+              {/* Dashboard - requires an approved account */}
+              <Route path="/app" element={<ProtectedRoute />}>
+                <Route element={<AppLayout />}>
+                  <Route index element={<Dashboard />} />
+                  <Route path="new" element={<NewProject />} />
+                  <Route path="projects/:id" element={<ProjectDetail />} />
+                  <Route path="account" element={<Account />} />
+                </Route>
+              </Route>
+
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
+        </ToastProvider>
+      </AuthProvider>
+    </ThemeProvider>
   )
 }

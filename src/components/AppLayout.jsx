@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-do
 import { useAuth } from '../context/AuthContext'
 import { APP_NAME } from '../lib/supabase'
 import { cn } from '../lib/utils'
+import ThemePicker from './ThemePicker'
 import Button from './ui/Button'
 import { ChevronDown, Grid, Logo, LogOut, Menu, Plus, User, X } from './Icons'
 
@@ -125,11 +126,15 @@ export default function AppLayout() {
               {menuOpen && (
                 <div
                   role="menu"
-                  className="absolute right-0 top-full z-50 mt-2 w-60 overflow-hidden rounded-xl border border-ink-700 bg-ink-900 shadow-2xl animate-fade-up"
+                  className="absolute right-0 top-full z-50 mt-2 w-72 overflow-hidden rounded-xl border border-ink-700 bg-ink-900 shadow-2xl animate-fade-up"
                 >
                   <div className="border-b border-ink-800 px-4 py-3">
                     <p className="truncate text-sm font-medium text-white">{displayName}</p>
                     <p className="truncate text-xs text-ink-500">{user?.email}</p>
+                  </div>
+
+                  <div className="border-b border-ink-800">
+                    <ThemePicker compact />
                   </div>
 
                   <Link
@@ -203,6 +208,10 @@ export default function AppLayout() {
                     <p className="truncate text-sm font-medium text-white">{displayName}</p>
                     <p className="truncate text-xs text-ink-500">{user?.email}</p>
                   </div>
+                </div>
+
+                <div className="-mx-1 rounded-xl border border-ink-800">
+                  <ThemePicker compact />
                 </div>
 
                 <Button variant="ghost" className="w-full justify-start" onClick={handleSignOut}>

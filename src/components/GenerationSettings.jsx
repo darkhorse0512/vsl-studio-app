@@ -3,6 +3,7 @@ import Button from './ui/Button'
 import { Input, Label, Textarea } from './ui/Form'
 import { Badge, Banner } from './ui/Feedback'
 import Modal from './ui/Modal'
+import Select from './ui/Select'
 import { Check, Sparkles, Target } from './Icons'
 
 export const LANGUAGES = [
@@ -250,23 +251,13 @@ export default function GenerationSettings({ settings, analysis, saving, onSave,
               </datalist>
             </div>
 
-            <div>
-              <Label htmlFor="output-language" hint="Everything is written natively in it">
-                Output language
-              </Label>
-              <select
-                id="output-language"
-                value={form.language}
-                onChange={update('language')}
-                className="h-11 w-full rounded-xl border border-ink-700 bg-ink-950/60 px-4 text-ink-50 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/60"
-              >
-                {LANGUAGES.map((item) => (
-                  <option key={item.value || 'source'} value={item.value}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <Select
+              label="Output language"
+              hint="Written natively, not translated"
+              value={form.language}
+              onChange={(next) => setForm((state) => ({ ...state, language: next }))}
+              options={LANGUAGES.map((item) => ({ value: item.value, label: item.label }))}
+            />
 
             <Input
               label="Market / country"
