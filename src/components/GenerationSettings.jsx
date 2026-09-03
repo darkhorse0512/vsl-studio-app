@@ -4,6 +4,7 @@ import { Input, Label, Textarea } from './ui/Form'
 import { Badge, Banner } from './ui/Feedback'
 import Modal from './ui/Modal'
 import Select from './ui/Select'
+import { cn } from '../lib/utils'
 import { Check, Sparkles, Target } from './Icons'
 
 export const LANGUAGES = [
@@ -21,6 +22,21 @@ export const LANGUAGES = [
   { value: 'tr', label: 'Türkçe' },
   { value: 'id', label: 'Bahasa Indonesia' },
   { value: 'ja', label: '日本語' },
+]
+
+export const STYLE_PRESETS = [
+  { value: '', label: 'Auto — from the VSL niche' },
+  { value: 'modern', label: 'Modern SaaS', description: 'Crisp, cool, lots of whitespace' },
+  { value: 'bold', label: 'Bold direct response', description: 'High contrast, oversized type' },
+  { value: 'elegant', label: 'Elegant editorial', description: 'Serif headings, premium restraint' },
+  { value: 'warm', label: 'Warm wellness', description: 'Soft, rounded, reassuring' },
+  { value: 'vibrant', label: 'Vibrant gradient', description: 'Glassy cards, colourful' },
+  { value: 'dark', label: 'Dark premium', description: 'Dark canvas, luminous accent' },
+]
+
+const PALETTE = [
+  '#e11d48', '#f97316', '#f59e0b', '#10b981',
+  '#0ea5e9', '#4f46e5', '#8b5cf6', '#0f172a',
 ]
 
 const PRODUCT_TYPES = [
@@ -48,6 +64,8 @@ export const EMPTY_SETTINGS = {
   cta_url: '',
   audience_note: '',
   custom_instructions: '',
+  style_preset: '',
+  primary_color: '',
 }
 
 export function isEmptySettings(settings) {
@@ -86,6 +104,7 @@ const FIELD_LABELS = {
   cta_label: 'CTA',
   cta_url: 'Link',
   audience_note: 'Audience',
+  style_preset: 'Style',
 }
 
 /**
@@ -154,7 +173,12 @@ export default function GenerationSettings({ settings, analysis, saving, onSave,
           <>
             <dl className="mt-5 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
               {Object.entries(FIELD_LABELS).map(([key, label]) => {
-                const value = key === 'language' ? languageLabel : current[key]
+                const value =
+                  key === 'language'
+                    ? languageLabel
+                    : key === 'style_preset'
+                      ? STYLE_PRESETS.find((item) => item.value === current[key])?.label
+                      : current[key]
                 if (!value) return null
 
                 return (
@@ -310,6 +334,54 @@ export default function GenerationSettings({ settings, analysis, saving, onSave,
               onChange={update('cta_url')}
               maxLength={500}
             />
+          </div>
+
+          <div className="rounded-xl border border-ink-800 bg-ink-950/40 p-4">
+            <p className="text-sm font-medium text-ink-200">Design style</p>
+            <p className="mb-4 mt-0.5 text-xs text-ink-500">
+              Applied to both the sales page and the quiz.
+            </p>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Select
+                value={form.style_preset}
+                onChange={(next) => setForm((state) => ({ ...state, style_preset: next }))}
+                options={STYLE_PRESETS}
+              />
+
+              <div>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {PALETTE.map((colour) => (
+                    <button
+                      key={colour}
+                      type="button"
+                      aria-label={`Use ${colour}`}
+                      aria-pressed={form.primary_color.toLowerCase() === colour}
+                      onClick={() =>
+                        setForm((state) => ({
+                          ...state,
+                          primary_color: state.primary_color.toLowerCase() === colour ? '' : colour,
+                        }))
+                      }
+                      className={cn(
+                        'h-7 w-7 rounded-lg transition-transform hover:scale-110',
+                        form.primary_color.toLowerCase() === colour &&
+                          'ring-2 ring-white ring-offset-2 ring-offset-ink-950',
+                      )}
+                      style={{ background: colour }}
+                    />
+                  ))}
+                </div>
+                <input
+                  type="text"
+                  value={form.primary_color}
+                  onChange={update('primary_color')}
+                  placeholder="#4f46e5 — or leave empty"
+                  maxLength={7}
+                  className="mt-2 h-9 w-full rounded-lg border border-ink-700 bg-ink-950/60 px-3 font-mono text-sm text-ink-50 placeholder:text-ink-600 focus:border-brand-500 focus:outline-none"
+                />
+              </div>
+            </div>
           </div>
 
           <Textarea
