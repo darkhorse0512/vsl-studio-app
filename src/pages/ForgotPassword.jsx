@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useT } from '../i18n'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import AuthShell from '../components/AuthShell'
@@ -7,6 +8,7 @@ import { Input } from '../components/ui/Form'
 import { Banner } from '../components/ui/Feedback'
 
 export default function ForgotPassword() {
+  const t = useT()
   const { requestPasswordReset } = useAuth()
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
@@ -18,7 +20,7 @@ export default function ForgotPassword() {
     setError('')
 
     if (!email.trim()) {
-      setError('Enter the email address on your account.')
+      setError(t('auth.enterEmail'))
       return
     }
 
@@ -35,25 +37,24 @@ export default function ForgotPassword() {
 
   return (
     <AuthShell
-      title="Reset your password"
-      subtitle="We will email you a link to choose a new one."
+      title={t('auth.resetTitle')}
+      subtitle={t('auth.resetSubtitle')}
       footer={
         <Link to="/login" className="font-medium text-brand-400 hover:text-brand-300">
-          Back to sign in
+          {t('auth.backToSignIn')}
         </Link>
       }
     >
       {sent ? (
-        <Banner tone="success" title="Check your inbox">
-          If an account exists for <span className="font-medium">{email}</span>, a reset link is on
-          its way. The link expires in one hour.
+        <Banner tone="success" title={t('auth.checkInbox')}>
+          {t('auth.resetSent', { email })}
         </Banner>
       ) : (
         <form onSubmit={handleSubmit} noValidate className="space-y-5">
           {error && <Banner tone="danger">{error}</Banner>}
 
           <Input
-            label="Email address"
+            label={t('auth.email')}
             type="email"
             name="email"
             autoComplete="email"
@@ -64,7 +65,7 @@ export default function ForgotPassword() {
           />
 
           <Button type="submit" size="lg" className="w-full" loading={submitting}>
-            Send reset link
+            {t('auth.sendResetLink')}
           </Button>
         </form>
       )}

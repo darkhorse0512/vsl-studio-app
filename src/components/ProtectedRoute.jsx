@@ -11,7 +11,7 @@ export default function ProtectedRoute({ requireApproved = true, children }) {
   const { isAuthenticated, loading, profile } = useAuth()
   const location = useLocation()
 
-  if (loading) return <LoadingScreen label="Checking your session…" />
+  if (loading) return <LoadingScreen />
 
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location.pathname }} replace />

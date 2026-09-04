@@ -7,8 +7,8 @@
  */
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 
-export const ACCEPTED_EXTENSIONS = ['.txt', '.md', '.pdf']
-export const ACCEPTED_ATTR = '.txt,.md,.pdf,text/plain,application/pdf'
+export const ACCEPTED_EXTENSIONS = ['.txt', '.text', '.md', '.markdown', '.pdf']
+export const ACCEPTED_ATTR = '.txt,.text,.md,.markdown,.pdf,text/plain,text/markdown,application/pdf'
 export const MAX_FILE_BYTES = 20 * 1024 * 1024 // 20 MB
 export const MIN_TEXT_LENGTH = 200
 

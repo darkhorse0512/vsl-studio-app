@@ -128,13 +128,46 @@ export function openInNewTab(html) {
 }
 
 export const PROJECT_STATUS = {
-  draft: { label: 'Draft', tone: 'neutral', hint: 'Ready to analyse' },
-  analyzing: { label: 'Analysing', tone: 'info', hint: 'The AI is reading your VSL' },
-  analyzed: { label: 'Analysed', tone: 'success', hint: 'Assets can be generated' },
-  failed: { label: 'Failed', tone: 'danger', hint: 'The last analysis did not finish' },
+  draft: {
+    label: 'Draft',
+    labelKey: 'project.statusDraft',
+    tone: 'neutral',
+    hint: 'Ready to analyse',
+    hintKey: 'project.hintDraft',
+  },
+  analyzing: {
+    label: 'Analysing',
+    labelKey: 'project.statusAnalyzing',
+    tone: 'info',
+    hint: 'The AI is reading your VSL',
+    hintKey: 'project.hintAnalyzing',
+  },
+  analyzed: {
+    label: 'Analysed',
+    labelKey: 'project.statusAnalyzed',
+    tone: 'success',
+    hint: 'Assets can be generated',
+    hintKey: 'project.hintAnalyzed',
+  },
+  failed: {
+    label: 'Failed',
+    labelKey: 'project.statusFailed',
+    tone: 'danger',
+    hint: 'The last analysis did not finish',
+    hintKey: 'project.hintFailed',
+  },
 }
 
 export const ASSET_LABEL = {
   sales_page: 'Sales page',
   quiz: 'Quiz',
+  product: 'Product',
+  ad_creative: 'Ad creative',
+}
+
+export const ASSET_LABEL_KEY = {
+  sales_page: 'assets.salesPage',
+  quiz: 'assets.quiz',
+  product: 'assets.product',
+  ad_creative: 'assets.adCreative',
 }

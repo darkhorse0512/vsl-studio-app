@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useT } from '../i18n'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import AuthShell from '../components/AuthShell'
@@ -9,6 +10,7 @@ import { Banner, LoadingScreen } from '../components/ui/Feedback'
 const MIN_PASSWORD_LENGTH = 8
 
 export default function ResetPassword() {
+  const t = useT()
   const { updatePassword, isAuthenticated, loading } = useAuth()
   const navigate = useNavigate()
 
@@ -25,10 +27,10 @@ export default function ResetPassword() {
 
     const next = {}
     if (password.length < MIN_PASSWORD_LENGTH) {
-      next.password = `Use at least ${MIN_PASSWORD_LENGTH} characters.`
+      next.password = t('auth.minChars', { count: MIN_PASSWORD_LENGTH })
     }
     if (confirmPassword !== password) {
-      next.confirmPassword = 'The two passwords do not match.'
+      next.confirmPassword = t('auth.passwordsDontMatch')
     }
     setErrors(next)
     if (Object.keys(next).length) return
@@ -45,36 +47,36 @@ export default function ResetPassword() {
     }
   }
 
-  if (loading) return <LoadingScreen label="Verifying your reset link…" />
+  if (loading) return <LoadingScreen label={t('common.loading')} />
 
   return (
     <AuthShell
-      title="Choose a new password"
-      subtitle="Pick something you have not used before."
+      title={t('auth.chooseNewPassword')}
+      subtitle={t('auth.chooseNewSubtitle')}
       footer={
         <Link to="/login" className="font-medium text-brand-400 hover:text-brand-300">
-          Back to sign in
+          {t('auth.backToSignIn')}
         </Link>
       }
     >
       {!isAuthenticated ? (
-        <Banner tone="warning" title="This link is no longer valid">
-          Password reset links expire after one hour and can only be used once.{' '}
+        <Banner tone="warning" title={t('auth.linkInvalid')}>
+          {t('auth.linkInvalidBody')}{' '}
           <Link to="/forgot-password" className="font-medium underline">
-            Request a new one
+            {t('auth.requestNew')}
           </Link>
           .
         </Banner>
       ) : done ? (
-        <Banner tone="success" title="Password updated">
-          Taking you to your dashboard…
+        <Banner tone="success" title={t('auth.passwordUpdated')}>
+          {t('auth.redirecting')}
         </Banner>
       ) : (
         <form onSubmit={handleSubmit} noValidate className="space-y-5">
           {formError && <Banner tone="danger">{formError}</Banner>}
 
           <PasswordInput
-            label="New password"
+            label={t('auth.newPassword')}
             autoComplete="new-password"
             placeholder="At least 8 characters"
             value={password}
@@ -84,7 +86,7 @@ export default function ResetPassword() {
           />
 
           <PasswordInput
-            label="Confirm new password"
+            label={t('auth.confirmNewPassword')}
             autoComplete="new-password"
             placeholder="Repeat your password"
             value={confirmPassword}
@@ -94,7 +96,7 @@ export default function ResetPassword() {
           />
 
           <Button type="submit" size="lg" className="w-full" loading={submitting}>
-            Update password
+            {t('auth.updatePassword')}
           </Button>
         </form>
       )}

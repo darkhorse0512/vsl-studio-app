@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useT } from '../i18n'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { APP_NAME, SUPPORT_EMAIL } from '../lib/supabase'
@@ -9,12 +10,13 @@ import { Check, Clock, Logo, LogOut, Refresh } from '../components/Icons'
 const POLL_INTERVAL_MS = 20_000
 
 const TIMELINE = [
-  { label: 'Account created', done: true },
-  { label: 'Administrator review', done: false, current: true },
-  { label: 'Full dashboard access', done: false },
+  { key: 'pending.stepCreated', done: true },
+  { key: 'pending.stepReview', done: false, current: true },
+  { key: 'pending.stepAccess', done: false },
 ]
 
 export default function PendingApproval() {
+  const t = useT()
   const { profile, refreshProfile, signOut, isAuthenticated, loading } = useAuth()
   const navigate = useNavigate()
   const [checking, setChecking] = useState(false)
@@ -59,16 +61,16 @@ export default function PendingApproval() {
                 <Clock className="h-7 w-7" />
               </div>
               <h1 className="mt-5 text-2xl font-bold text-white">
-                {rejected ? 'Your access request was declined' : 'Your account is suspended'}
+                {rejected ? t('pending.rejectedTitle') : t('pending.suspendedTitle')}
               </h1>
               <p className="mt-3 text-sm leading-relaxed text-ink-400">
                 {rejected
-                  ? 'An administrator reviewed your request and did not enable this account.'
-                  : 'An administrator has paused access to this account.'}{' '}
-                If you believe this is a mistake, get in touch and we will take another look.
+                  ? t('pending.rejectedBody')
+                  : t('pending.suspendedBody')}{' '}
+                {t('pending.contactHint')}
               </p>
               <Button href={`mailto:${SUPPORT_EMAIL}`} className="mt-7 w-full">
-                Contact support
+                {t('pending.contactSupport')}
               </Button>
             </>
           ) : (
@@ -76,16 +78,14 @@ export default function PendingApproval() {
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/15 text-amber-400">
                 <Clock className="h-7 w-7" />
               </div>
-              <h1 className="mt-5 text-2xl font-bold text-white">You&apos;re on the list</h1>
+              <h1 className="mt-5 text-2xl font-bold text-white">{t('pending.title')}</h1>
               <p className="mt-3 text-sm leading-relaxed text-ink-400">
-                Your account was created successfully. An administrator needs to enable it before
-                you can create projects — this page unlocks itself automatically the moment that
-                happens.
+                {t('pending.body')}
               </p>
 
               <ol className="mt-8 space-y-3 text-left">
                 {TIMELINE.map((step) => (
-                  <li key={step.label} className="flex items-center gap-3">
+                  <li key={step.key} className="flex items-center gap-3">
                     <span
                       className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs ${
                         step.done
@@ -102,7 +102,7 @@ export default function PendingApproval() {
                         step.done || step.current ? 'text-ink-100' : 'text-ink-500'
                       }`}
                     >
-                      {step.label}
+                      {t(step.key)}
                     </span>
                   </li>
                 ))}
@@ -110,7 +110,7 @@ export default function PendingApproval() {
 
               <Button onClick={handleCheck} className="mt-8 w-full" loading={checking}>
                 <Refresh className="h-4 w-4" />
-                Check my status
+                {t('pending.checkStatus')}
               </Button>
             </>
           )}
@@ -122,18 +122,18 @@ export default function PendingApproval() {
               className="inline-flex items-center gap-1.5 link-muted"
             >
               <LogOut className="h-4 w-4" />
-              Sign out
+              {t('nav.signOut')}
             </button>
             <span className="text-ink-700">·</span>
             <a href={`mailto:${SUPPORT_EMAIL}`} className="link-muted">
-              Contact support
+              {t('pending.contactSupport')}
             </a>
           </div>
         </div>
 
         {profile?.email && (
           <Banner tone="neutral" className="mt-5">
-            Signed in as <span className="font-medium text-white">{profile.email}</span> ·{' '}
+            {t('pending.signedInAs')} <span className="font-medium text-white">{profile.email}</span> ·{' '}
             {APP_NAME}
           </Banner>
         )}

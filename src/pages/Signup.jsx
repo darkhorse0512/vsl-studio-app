@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useT } from '../i18n'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import AuthShell from '../components/AuthShell'
@@ -10,6 +11,7 @@ import { CheckCircle } from '../components/Icons'
 const MIN_PASSWORD_LENGTH = 8
 
 export default function Signup() {
+  const t = useT()
   const { signUp } = useAuth()
   const navigate = useNavigate()
 
@@ -33,18 +35,18 @@ export default function Signup() {
   const validate = () => {
     const next = {}
 
-    if (!form.fullName.trim()) next.fullName = 'Tell us who you are.'
+    if (!form.fullName.trim()) next.fullName = t('auth.enterName')
     if (!form.email.trim()) {
-      next.email = 'Enter your email address.'
+      next.email = t('auth.enterEmail')
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-      next.email = 'That email address does not look right.'
+      next.email = t('auth.invalidEmail')
     }
 
     if (form.password.length < MIN_PASSWORD_LENGTH) {
-      next.password = `Use at least ${MIN_PASSWORD_LENGTH} characters.`
+      next.password = t('auth.minChars', { count: MIN_PASSWORD_LENGTH })
     }
     if (form.confirmPassword !== form.password) {
-      next.confirmPassword = 'The two passwords do not match.'
+      next.confirmPassword = t('auth.passwordsDontMatch')
     }
 
     setErrors(next)
@@ -75,21 +77,19 @@ export default function Signup() {
   if (confirmationSent) {
     return (
       <AuthShell
-        title="Check your inbox"
-        subtitle="One more step before we can enable your account."
+        title={t('auth.checkInbox')}
+        subtitle={t('auth.confirmSubtitle')}
       >
         <div className="card p-6 text-center">
           <CheckCircle className="mx-auto h-12 w-12 text-emerald-400" />
           <p className="mt-4 text-ink-200">
-            We sent a confirmation link to{' '}
-            <span className="font-medium text-white">{form.email}</span>.
+            {t('auth.confirmSent', { email: form.email })}
           </p>
           <p className="mt-3 text-sm leading-relaxed text-ink-400">
-            Confirm your address, then sign in. An administrator will review and enable your
-            account before you can create projects.
+            {t('auth.confirmHint')}
           </p>
           <Button to="/login" className="mt-6 w-full">
-            Go to sign in
+            {t('auth.goToSignIn')}
           </Button>
         </div>
       </AuthShell>
@@ -98,13 +98,13 @@ export default function Signup() {
 
   return (
     <AuthShell
-      title="Create your account"
-      subtitle="Sign up in seconds. An administrator enables your access."
+      title={t('auth.signUpTitle')}
+      subtitle={t('auth.signUpSubtitle')}
       footer={
         <>
-          Already have an account?{' '}
+          {t('auth.hasAccount')}{' '}
           <Link to="/login" className="font-medium text-brand-400 hover:text-brand-300">
-            Sign in
+            {t('nav.signIn')}
           </Link>
         </>
       }
@@ -114,7 +114,7 @@ export default function Signup() {
 
         <div className="grid gap-5 sm:grid-cols-2">
           <Input
-            label="Full name"
+            label={t('auth.fullName')}
             name="fullName"
             autoComplete="name"
             placeholder="Ana Silva"
@@ -124,17 +124,17 @@ export default function Signup() {
             required
           />
           <Input
-            label="Company"
+            label={t('auth.company')}
             name="company"
             autoComplete="organization"
-            placeholder="Optional"
+            placeholder={t('common.optional')}
             value={form.company}
             onChange={update('company')}
           />
         </div>
 
         <Input
-          label="Email address"
+          label={t('auth.email')}
           type="email"
           name="email"
           autoComplete="email"
@@ -146,7 +146,7 @@ export default function Signup() {
         />
 
         <PasswordInput
-          label="Password"
+          label={t('auth.password')}
           name="password"
           autoComplete="new-password"
           placeholder="At least 8 characters"
@@ -157,7 +157,7 @@ export default function Signup() {
         />
 
         <PasswordInput
-          label="Confirm password"
+          label={t('auth.confirmPassword')}
           name="confirmPassword"
           autoComplete="new-password"
           placeholder="Repeat your password"
@@ -168,12 +168,11 @@ export default function Signup() {
         />
 
         <Banner tone="info">
-          New accounts start in review. You will be able to sign in immediately and will get full
-          access as soon as an administrator approves you.
+          {t('auth.signUpNotice')}
         </Banner>
 
         <Button type="submit" size="lg" className="w-full" loading={submitting}>
-          Create account
+          {t('nav.createAccount')}
         </Button>
       </form>
     </AuthShell>

@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { useT } from '../i18n'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
@@ -26,24 +27,15 @@ import {
 } from '../components/Icons'
 
 const STEPS = [
-  {
-    icon: Layers,
-    title: 'Add your VSL',
-    body: 'Paste the transcript or upload a .txt, .md or .pdf. PDFs are read in your browser.',
-  },
-  {
-    icon: Sparkles,
-    title: 'One analysis',
-    body: 'The AI extracts the promise, audience, pains, desires, mechanism and full offer.',
-  },
-  {
-    icon: FileText,
-    title: 'Two assets',
-    body: 'A sales page and a quiz, both built from that single brief so they never contradict.',
-  },
+  { icon: Layers, titleKey: 'newProject.step1Title', bodyKey: 'newProject.step1Body' },
+  { icon: Sparkles, titleKey: 'newProject.step2Title', bodyKey: 'newProject.step2Body' },
+  { icon: FileText, titleKey: 'newProject.step3Title', bodyKey: 'newProject.step3Body' },
 ]
 
+const TIPS = ['newProject.tip1', 'newProject.tip2', 'newProject.tip3']
+
 export default function NewProject() {
+  const t = useT()
   const { user } = useAuth()
   const toast = useToast()
   const navigate = useNavigate()
@@ -84,9 +76,7 @@ export default function NewProject() {
         setName(selected.name.replace(/\.[^.]+$/, '').slice(0, 120))
       }
 
-      toast.success(
-        `Extracted ${extracted.length.toLocaleString()} characters from ${selected.name}.`,
-      )
+      toast.success(t('newProject.extracted', { count: extracted.length.toLocaleString() }))
     } catch (error) {
       setFile(null)
       setFormError(error.message)
@@ -116,9 +106,9 @@ export default function NewProject() {
     setFormError('')
 
     const next = {}
-    if (!name.trim()) next.name = 'Give this project a name.'
+    if (!name.trim()) next.name = t('newProject.nameRequired')
     if (characters < MIN_TEXT_LENGTH) {
-      next.text = `Add at least ${MIN_TEXT_LENGTH} characters of VSL script (currently ${characters}).`
+      next.text = t('newProject.tooShort', { min: MIN_TEXT_LENGTH, current: characters })
     }
     setErrors(next)
     if (Object.keys(next).length) return
@@ -134,7 +124,7 @@ export default function NewProject() {
           storagePath = await uploadSourceFile(user.id, file)
         } catch (uploadError) {
           console.warn('Original file could not be stored:', uploadError)
-          toast.info('The original file could not be stored, but the text was captured.')
+          toast.info(t('newProject.fileStoreWarning'))
         }
       }
 
@@ -157,10 +147,10 @@ export default function NewProject() {
   return (
     <>
       <PageHeader
-        back={{ to: '/app', label: 'All projects' }}
-        eyebrow="New project"
-        title="Add your VSL"
-        description="One analysis, two conversion assets. Paste the script or upload the file — we handle the rest."
+        back={{ to: '/app', label: t('project.allProjects') }}
+        eyebrow={t('newProject.eyebrow')}
+        title={t('newProject.title')}
+        description={t('newProject.subtitle')}
       />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
@@ -170,8 +160,8 @@ export default function NewProject() {
 
           <section className="card p-5 sm:p-6">
             <Input
-              label="Project name"
-              placeholder="e.g. Método Emagrecer Leve — VSL v3"
+              label={t('newProject.projectName')}
+              placeholder={t('newProject.projectNamePlaceholder')}
               value={name}
               onChange={(event) => {
                 setName(event.target.value)
@@ -185,13 +175,13 @@ export default function NewProject() {
 
           <section className="card p-5 sm:p-6">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              <Label required>VSL script</Label>
+              <Label required>{t('newProject.scriptLabel')}</Label>
 
               <div className="inline-flex rounded-xl border border-ink-800 bg-ink-950/60 p-1">
                 {[
-                  ['paste', 'Paste text', FileText],
-                  ['file', 'Upload file', Upload],
-                ].map(([value, label, IconComponent]) => (
+                  ['paste', 'newProject.pasteTab', FileText],
+                  ['file', 'newProject.uploadTab', Upload],
+                ].map(([value, labelKey, IconComponent]) => (
                   <button
                     key={value}
                     type="button"
@@ -205,7 +195,7 @@ export default function NewProject() {
                     )}
                   >
                     <IconComponent className="h-4 w-4" />
-                    {label}
+                    {t(labelKey)}
                   </button>
                 ))}
               </div>
@@ -214,7 +204,7 @@ export default function NewProject() {
             {mode === 'paste' ? (
               <Textarea
                 rows={16}
-                placeholder="Paste the full VSL transcript here…"
+                placeholder={t('newProject.pastePlaceholder')}
                 value={text}
                 onChange={(event) => {
                   setText(event.target.value)
@@ -232,8 +222,17 @@ export default function NewProject() {
                   }}
                   onDragLeave={() => setDragging(false)}
                   onDrop={onDrop}
+                  onClick={() => !extracting && fileInputRef.current?.click()}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      fileInputRef.current?.click()
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
                   className={cn(
-                    'rounded-2xl border-2 border-dashed p-10 text-center transition-colors',
+                    'cursor-pointer rounded-2xl border-2 border-dashed p-10 text-center transition-colors focus:outline-none focus-visible:border-brand-500 focus-visible:ring-2 focus-visible:ring-brand-500/40',
                     dragging
                       ? 'border-brand-500 bg-brand-500/5'
                       : 'border-ink-700 hover:border-ink-600',
@@ -251,7 +250,9 @@ export default function NewProject() {
                   {extracting ? (
                     <div className="flex flex-col items-center gap-3">
                       <Loader className="h-8 w-8 text-brand-400" />
-                      <p className="text-sm text-ink-300">Reading {file?.name}…</p>
+                      <p className="text-sm text-ink-300">
+                        {t('newProject.reading', { name: file?.name })}
+                      </p>
                       <div className="h-1.5 w-56 overflow-hidden rounded-full bg-ink-800">
                         <div
                           className="h-full rounded-full bg-gradient-to-r from-brand-500 to-accent-500 transition-all duration-300"
@@ -267,17 +268,20 @@ export default function NewProject() {
                       <div>
                         <p className="font-medium text-white">{file.name}</p>
                         <p className="mt-0.5 text-xs text-ink-500">
-                          {formatBytes(file.size)} · {characters.toLocaleString()} characters
-                          extracted
+                          {formatBytes(file.size)} ·{' '}
+                          {t('newProject.extracted', { count: characters.toLocaleString() })}
                         </p>
                       </div>
                       <button
                         type="button"
-                        onClick={clearFile}
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          clearFile()
+                        }}
                         className="inline-flex items-center gap-1.5 text-sm link-muted"
                       >
                         <X className="h-4 w-4" />
-                        Choose a different file
+                        {t('newProject.differentFile')}
                       </button>
                     </div>
                   ) : (
@@ -286,15 +290,12 @@ export default function NewProject() {
                         <Upload className="h-6 w-6" />
                       </div>
                       <div>
-                        <label
-                          htmlFor="vsl-file"
-                          className="cursor-pointer font-medium text-brand-400 hover:text-brand-300"
-                        >
-                          Choose a file
-                        </label>
-                        <span className="text-ink-400"> or drag it here</span>
+                        <span className="font-medium text-brand-400">
+                          {t('newProject.chooseFile')}
+                        </span>
+                        <span className="text-ink-400"> {t('newProject.orDragIt')}</span>
                       </div>
-                      <p className="text-xs text-ink-500">.txt, .md or .pdf — up to 20 MB</p>
+                      <p className="text-xs text-ink-500">{t('newProject.fileTypes')}</p>
                     </div>
                   )}
                 </div>
@@ -308,7 +309,7 @@ export default function NewProject() {
                 {file && text && (
                   <details className="mt-4 rounded-xl border border-ink-800 p-4">
                     <summary className="cursor-pointer text-sm link-muted">
-                      Review the extracted text
+                      {t('newProject.reviewExtracted')}
                     </summary>
                     <Textarea
                       rows={12}
@@ -330,23 +331,29 @@ export default function NewProject() {
                 )}
               >
                 {ready && <Check className="h-3.5 w-3.5" />}
-                {characters.toLocaleString()} characters
+                {characters.toLocaleString()} {t('common.characters')}
               </span>
-              <span className="text-ink-500">{words.toLocaleString()} words</span>
+              <span className="text-ink-500">
+                {words.toLocaleString()} {t('common.words')}
+              </span>
               {words > 0 && (
-                <span className="text-ink-500">≈ {readingMinutes(text)} min spoken</span>
+                <span className="text-ink-500">
+                  {t('common.minSpoken', { minutes: readingMinutes(text) })}
+                </span>
               )}
-              <span className="ml-auto text-ink-600">Minimum {MIN_TEXT_LENGTH} characters</span>
+              <span className="ml-auto text-ink-600">
+                {t('newProject.minCharacters', { count: MIN_TEXT_LENGTH })}
+              </span>
             </div>
           </section>
 
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <Button to="/app" variant="secondary" size="lg">
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" size="lg" loading={submitting} disabled={extracting}>
               <Sparkles className="h-5 w-5" />
-              Create and analyse
+              {t('newProject.createAndAnalyse')}
             </Button>
           </div>
         </form>
@@ -355,18 +362,20 @@ export default function NewProject() {
         <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
           <div className="card p-5">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-ink-300">
-              What happens next
+              {t('newProject.whatHappens')}
             </h2>
 
             <ol className="mt-4 space-y-4">
               {STEPS.map((step, index) => (
-                <li key={step.title} className="flex gap-3">
+                <li key={step.titleKey} className="flex gap-3">
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-500/12 text-xs font-bold text-brand-300">
                     {index + 1}
                   </span>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-white">{step.title}</p>
-                    <p className="mt-0.5 text-xs leading-relaxed text-ink-400">{step.body}</p>
+                    <p className="text-sm font-medium text-white">{t(step.titleKey)}</p>
+                    <p className="mt-0.5 text-xs leading-relaxed text-ink-400">
+                      {t(step.bodyKey)}
+                    </p>
                   </div>
                 </li>
               ))}
@@ -375,17 +384,13 @@ export default function NewProject() {
 
           <div className="card p-5">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-ink-300">
-              For the best result
+              {t('newProject.tipsTitle')}
             </h2>
             <ul className="mt-3 space-y-2.5">
-              {[
-                'Use the full script, not a summary — the analysis is only as rich as its input.',
-                'Scanned PDFs have no text layer. Paste the transcript instead.',
-                'Selling something other than what the VSL sells? Set the target product after analysing.',
-              ].map((tip) => (
+              {TIPS.map((tip) => (
                 <li key={tip} className="flex gap-2.5 text-xs leading-relaxed text-ink-400">
                   <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand-400" />
-                  {tip}
+                  {t(tip)}
                 </li>
               ))}
             </ul>
@@ -396,8 +401,7 @@ export default function NewProject() {
               <Puzzle className="h-4.5 w-4.5" />
             </span>
             <p className="text-xs leading-relaxed text-ink-400">
-              Analysis takes 20–60 seconds. You can regenerate either asset as many times as you
-              like afterwards.
+              {t('newProject.timingNote')}
             </p>
           </div>
         </aside>

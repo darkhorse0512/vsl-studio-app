@@ -1,15 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
+import { useT } from '../i18n'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { APP_NAME } from '../lib/supabase'
 import { cn } from '../lib/utils'
+import LanguagePicker from './LanguagePicker'
 import ThemePicker from './ThemePicker'
 import Button from './ui/Button'
 import { ChevronDown, Grid, Logo, LogOut, Menu, Plus, User, X } from './Icons'
 
 const NAV = [
-  { to: '/app', label: 'Projects', icon: Grid, end: true },
-  { to: '/app/account', label: 'Account', icon: User },
+  { to: '/app', labelKey: 'nav.projects', icon: Grid, end: true },
+  { to: '/app/account', labelKey: 'nav.account', icon: User },
 ]
 
 /**
@@ -20,6 +22,7 @@ const NAV = [
  * a sidebar competing with the content.
  */
 export default function AppLayout() {
+  const t = useT()
   const { profile, user, signOut } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -91,7 +94,7 @@ export default function AppLayout() {
           <nav className="hidden items-center gap-1 lg:flex">
             {NAV.map((item) => (
               <NavLink key={item.to} to={item.to} end={item.end} className={linkClass}>
-                {item.label}
+                {t(item.labelKey)}
               </NavLink>
             ))}
           </nav>
@@ -99,7 +102,7 @@ export default function AppLayout() {
           <div className="ml-auto flex items-center gap-2 sm:gap-3">
             <Button to="/app/new" size="sm" className="hidden sm:inline-flex">
               <Plus className="h-4 w-4" />
-              New project
+              {t('nav.newProject')}
             </Button>
 
             {/* Account menu ---------------------------------------- */}
@@ -134,6 +137,10 @@ export default function AppLayout() {
                   </div>
 
                   <div className="border-b border-ink-800">
+                    <LanguagePicker compact />
+                  </div>
+
+                  <div className="border-b border-ink-800">
                     <ThemePicker compact />
                   </div>
 
@@ -143,7 +150,7 @@ export default function AppLayout() {
                     className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink-200 transition-colors hover:bg-ink-800 hover:text-white"
                   >
                     <User className="h-4 w-4" />
-                    Account settings
+                    {t('nav.accountSettings')}
                   </Link>
 
                   <button
@@ -153,7 +160,7 @@ export default function AppLayout() {
                     className="flex w-full items-center gap-2.5 border-t border-ink-800 px-4 py-2.5 text-sm text-ink-200 transition-colors hover:bg-ink-800 hover:text-white"
                   >
                     <LogOut className="h-4 w-4" />
-                    Sign out
+                    {t('nav.signOut')}
                   </button>
                 </div>
               )}
@@ -162,7 +169,7 @@ export default function AppLayout() {
             <button
               type="button"
               onClick={() => setMobileOpen((open) => !open)}
-              aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+              aria-label={mobileOpen ? t('nav.closeMenu') : t('nav.openMenu')}
               aria-expanded={mobileOpen}
               className="rounded-lg p-2 text-ink-300 transition-colors hover:bg-ink-800 hover:text-white lg:hidden"
             >
@@ -190,14 +197,14 @@ export default function AppLayout() {
                   }
                 >
                   <item.icon className="h-5 w-5" />
-                  {item.label}
+                  {t(item.labelKey)}
                 </NavLink>
               ))}
 
               <div className="mt-3 space-y-2 border-t border-ink-800 pt-3">
                 <Button to="/app/new" className="w-full sm:hidden">
                   <Plus className="h-4 w-4" />
-                  New project
+                  {t('nav.newProject')}
                 </Button>
 
                 <div className="flex items-center gap-3 px-1 py-2">
@@ -211,12 +218,13 @@ export default function AppLayout() {
                 </div>
 
                 <div className="-mx-1 rounded-xl border border-ink-800">
+                  <LanguagePicker compact />
                   <ThemePicker compact />
                 </div>
 
                 <Button variant="ghost" className="w-full justify-start" onClick={handleSignOut}>
                   <LogOut className="h-4 w-4" />
-                  Sign out
+                  {t('nav.signOut')}
                 </Button>
               </div>
             </nav>

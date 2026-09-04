@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useT } from '../i18n'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import AuthShell from '../components/AuthShell'
@@ -7,6 +8,7 @@ import { Input, PasswordInput } from '../components/ui/Form'
 import { Banner } from '../components/ui/Feedback'
 
 export default function Login() {
+  const t = useT()
   const { signIn } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -26,8 +28,8 @@ export default function Login() {
     setFormError('')
 
     const nextErrors = {}
-    if (!form.email.trim()) nextErrors.email = 'Enter your email address.'
-    if (!form.password) nextErrors.password = 'Enter your password.'
+    if (!form.email.trim()) nextErrors.email = t('auth.enterEmail')
+    if (!form.password) nextErrors.password = t('auth.enterPassword')
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length) return
 
@@ -44,13 +46,13 @@ export default function Login() {
 
   return (
     <AuthShell
-      title="Welcome back"
-      subtitle="Sign in to your dashboard to keep building."
+      title={t('auth.welcomeBack')}
+      subtitle={t('auth.signInSubtitle')}
       footer={
         <>
-          Don&apos;t have an account?{' '}
+          {t('auth.noAccount')}{' '}
           <Link to="/signup" className="font-medium text-brand-400 hover:text-brand-300">
-            Create one
+            {t('auth.createOne')}
           </Link>
         </>
       }
@@ -59,7 +61,7 @@ export default function Login() {
         {formError && <Banner tone="danger">{formError}</Banner>}
 
         <Input
-          label="Email address"
+          label={t('auth.email')}
           type="email"
           name="email"
           autoComplete="email"
@@ -71,7 +73,7 @@ export default function Login() {
         />
 
         <PasswordInput
-          label="Password"
+          label={t('auth.password')}
           name="password"
           autoComplete="current-password"
           placeholder="••••••••"
@@ -80,14 +82,14 @@ export default function Login() {
           error={errors.password}
           hint={
             <Link to="/forgot-password" className="text-brand-400 hover:text-brand-300">
-              Forgot password?
+              {t('auth.forgotPassword')}
             </Link>
           }
           required
         />
 
         <Button type="submit" size="lg" className="w-full" loading={submitting}>
-          Sign in
+          {t('nav.signIn')}
         </Button>
       </form>
     </AuthShell>

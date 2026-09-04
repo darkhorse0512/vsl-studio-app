@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useT } from '../i18n'
 import { Link } from 'react-router-dom'
 import { deleteProject, listProjects } from '../lib/api'
 import { useToast } from '../context/ToastContext'
@@ -20,13 +21,14 @@ import {
 } from '../components/Icons'
 
 const FILTERS = [
-  ['all', 'All'],
-  ['analyzed', 'Analysed'],
-  ['draft', 'Draft'],
-  ['failed', 'Failed'],
+  ['all', 'common.all'],
+  ['analyzed', 'dashboard.filterAnalysed'],
+  ['draft', 'dashboard.filterDraft'],
+  ['failed', 'dashboard.filterFailed'],
 ]
 
 export default function Dashboard() {
+  const t = useT()
   const { profile } = useAuth()
   const toast = useToast()
 
@@ -83,7 +85,7 @@ export default function Dashboard() {
     try {
       await deleteProject(pendingDelete.id)
       setProjects((current) => current.filter((project) => project.id !== pendingDelete.id))
-      toast.success(`"${pendingDelete.name}" was deleted.`)
+      toast.success(t('dashboard.deleted', { name: pendingDelete.name }))
       setPendingDelete(null)
     } catch (deleteError) {
       toast.error(deleteError.message)
@@ -97,12 +99,12 @@ export default function Dashboard() {
   return (
     <>
       <PageHeader
-        title={firstName ? `Welcome back, ${firstName}` : 'Your projects'}
-        description="Each project holds one VSL analysis and every asset generated from it."
+        title={firstName ? t('dashboard.welcome', { name: firstName }) : t('dashboard.titleFallback')}
+        description={t('dashboard.subtitle')}
         actions={
           <Button to="/app/new">
             <Plus className="h-4.5 w-4.5" />
-            New project
+            {t('nav.newProject')}
           </Button>
         }
       />
@@ -110,18 +112,18 @@ export default function Dashboard() {
       <div className="space-y-6">
         {/* Stats ------------------------------------------------------ */}
         <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-          <StatTile icon={Layers} label="Projects" value={stats.projects} loading={loading} />
-          <StatTile icon={Sparkles} label="Analysed" value={stats.analysed} loading={loading} />
+          <StatTile icon={Layers} label={t('dashboard.statProjects')} value={stats.projects} loading={loading} />
+          <StatTile icon={Sparkles} label={t('dashboard.statAnalysed')} value={stats.analysed} loading={loading} />
           <StatTile
             icon={FileText}
-            label="Sales pages"
+            label={t('dashboard.statPages')}
             value={stats.salesPages}
             loading={loading}
             tone="brand"
           />
           <StatTile
             icon={Puzzle}
-            label="Quizzes"
+            label={t('dashboard.statQuizzes')}
             value={stats.quizzes}
             loading={loading}
             tone="accent"
@@ -131,10 +133,10 @@ export default function Dashboard() {
         {error && (
           <Banner
             tone="danger"
-            title="Could not load your projects"
+            title={t('dashboard.loadError')}
             action={
               <Button size="sm" variant="secondary" onClick={load}>
-                Retry
+                {t('common.retry')}
               </Button>
             }
           >
@@ -162,14 +164,14 @@ export default function Dashboard() {
                 type="search"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search projects…"
-                aria-label="Search projects"
+                placeholder={t('dashboard.searchPlaceholder')}
+                aria-label={t('dashboard.searchPlaceholder')}
                 className="h-10 w-full rounded-xl border border-ink-800 bg-ink-950/60 pl-10 pr-4 text-sm text-ink-50 placeholder:text-ink-500 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
               />
             </div>
 
             <div className="flex gap-1 overflow-x-auto rounded-xl border border-ink-800 bg-ink-950/60 p-1 scrollbar-none">
-              {FILTERS.map(([value, label]) => (
+              {FILTERS.map(([value, labelKey]) => (
                 <button
                   key={value}
                   type="button"
@@ -182,7 +184,7 @@ export default function Dashboard() {
                       : 'text-ink-400 hover:text-ink-100',
                   )}
                 >
-                  {label}
+                  {t(labelKey)}
                 </button>
               ))}
             </div>
@@ -208,20 +210,20 @@ export default function Dashboard() {
         ) : projects.length === 0 ? (
           <EmptyState
             icon={Sparkles}
-            title="Create your first project"
-            description="Paste a VSL script or upload a .txt or .pdf. We analyse it once and build a sales page and a quiz from that same brief."
+            title={t('dashboard.emptyTitle')}
+            description={t('dashboard.emptyBody')}
             action={
               <Button to="/app/new" size="lg">
                 <Plus className="h-5 w-5" />
-                New project
+                {t('nav.newProject')}
               </Button>
             }
           />
         ) : visible.length === 0 ? (
           <EmptyState
             icon={Grid}
-            title="Nothing matches those filters"
-            description="Try a different search term, or switch the status filter back to All."
+            title={t('dashboard.noMatchTitle')}
+            description={t('dashboard.noMatchBody')}
             action={
               <Button
                 variant="secondary"
@@ -230,7 +232,7 @@ export default function Dashboard() {
                   setFilter('all')
                 }}
               >
-                Clear filters
+                {t('common.clearFilters')}
               </Button>
             }
           />
@@ -252,9 +254,9 @@ export default function Dashboard() {
         onClose={() => setPendingDelete(null)}
         onConfirm={handleDelete}
         loading={deleting}
-        title="Delete this project?"
-        confirmLabel="Delete project"
-        message={`"${pendingDelete?.name}" and every asset generated from it will be permanently removed. This cannot be undone.`}
+        title={t('dashboard.deleteTitle')}
+        confirmLabel={t('dashboard.deleteConfirm')}
+        message={t('dashboard.deleteBody', { name: pendingDelete?.name })}
       />
     </>
   )
@@ -296,6 +298,7 @@ function StatTile({ icon: IconComponent, label, value, loading, tone = 'default'
 }
 
 function ProjectCard({ project, onDelete }) {
+  const t = useT()
   const status = PROJECT_STATUS[project.status] ?? PROJECT_STATUS.draft
   const assets = project.assets ?? []
   const pages = assets.filter((asset) => asset.type === 'sales_page').length
@@ -322,14 +325,14 @@ function ProjectCard({ project, onDelete }) {
           <p className="mt-1 truncate text-xs text-ink-500">
             {project.source_type === 'file' && project.source_filename
               ? project.source_filename
-              : 'Pasted text'}{' '}
+              : t('dashboard.pastedText')}{' '}
             · {timeAgo(project.created_at)}
           </p>
         </div>
 
         <Badge tone={status.tone} className="shrink-0">
           <Dot tone={status.tone} />
-          {status.label}
+          {t(status.labelKey)}
         </Badge>
       </div>
 
@@ -343,21 +346,23 @@ function ProjectCard({ project, onDelete }) {
         {pages > 0 && (
           <Badge tone="brand">
             <FileText className="h-3.5 w-3.5" />
-            {pages > 1 ? `${pages} sales pages` : 'Sales page'}
+            {pages > 1 ? `${pages} ${t('dashboard.statPages')}` : t('assets.salesPage')}
           </Badge>
         )}
         {quizzes > 0 && (
           <Badge tone="brand">
             <Puzzle className="h-3.5 w-3.5" />
-            {quizzes > 1 ? `${quizzes} quizzes` : 'Quiz'}
+            {quizzes > 1 ? `${quizzes} ${t('dashboard.statQuizzes')}` : t('project.tabQuiz')}
           </Badge>
         )}
-        {assets.length === 0 && <span className="text-xs text-ink-500">{status.hint}</span>}
+        {assets.length === 0 && (
+          <span className="text-xs text-ink-500">{t(status.hintKey)}</span>
+        )}
       </div>
 
       <div className="mt-5 flex items-center justify-between border-t border-ink-800 pt-4">
         <span className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-400 transition-colors group-hover:text-brand-300">
-          Open project
+          {t('dashboard.openProject')}
           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
         </span>
 
@@ -368,7 +373,7 @@ function ProjectCard({ project, onDelete }) {
             event.stopPropagation()
             onDelete()
           }}
-          aria-label={`Delete ${project.name}`}
+          aria-label={`${t('common.delete')} ${project.name}`}
           className="relative z-10 rounded-lg p-2 text-ink-500 opacity-0 transition-all hover:bg-red-500/10 hover:text-red-400 focus-visible:opacity-100 group-hover:opacity-100"
         >
           <Trash className="h-4 w-4" />
