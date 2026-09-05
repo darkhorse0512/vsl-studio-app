@@ -11,7 +11,16 @@ import {
   updateProjectSettings,
 } from '../lib/api'
 import { useToast } from '../context/ToastContext'
-import { ASSET_LABEL, PROJECT_STATUS, cn, formatDateTime, readingMinutes, timeAgo, wordCount } from '../lib/utils'
+import {
+  ASSET_LABEL_KEY,
+  PROJECT_STATUS,
+  cn,
+  formatDateTime,
+  readingMinutes,
+  timeAgo,
+  wordCount,
+} from '../lib/utils'
+import { useT } from '../i18n'
 import PageHeader from '../components/PageHeader'
 import AnalysisPanel from '../components/AnalysisPanel'
 import GenerationSettings, { isEmptySettings } from '../components/GenerationSettings'
@@ -23,11 +32,13 @@ import { Badge, Banner, Dot, EmptyState, LoadingScreen } from '../components/ui/
 import Modal, { ConfirmDialog } from '../components/ui/Modal'
 import {
   ArrowLeft,
+  Book,
   Check,
   Download,
   Eye,
   FileText,
   Layers,
+  Megaphone,
   Puzzle,
   Refresh,
   Sparkles,
@@ -35,13 +46,42 @@ import {
 } from '../components/Icons'
 
 const TABS = [
-  { id: 'analysis', label: 'Analysis', icon: Sparkles },
-  { id: 'sales_page', label: 'Sales page', icon: FileText },
-  { id: 'quiz', label: 'Quiz', icon: Puzzle },
-  { id: 'source', label: 'VSL source', icon: Layers },
+  { id: 'analysis', labelKey: 'project.tabAnalysis', icon: Sparkles },
+  { id: 'sales_page', labelKey: 'project.tabSalesPage', icon: FileText },
+  { id: 'quiz', labelKey: 'project.tabQuiz', icon: Puzzle },
+  { id: 'product', labelKey: 'project.tabProduct', icon: Book },
+  { id: 'ad_creative', labelKey: 'project.tabAd', icon: Megaphone },
+  { id: 'source', labelKey: 'project.tabSource', icon: Layers },
 ]
 
+/** Everything the four generators need, in one place. */
+const GENERATORS = [
+  {
+    type: 'sales_page',
+    icon: FileText,
+    titleKey: 'assets.salesPage',
+    descKey: 'assets.salesPageDesc',
+  },
+  { type: 'quiz', icon: Puzzle, titleKey: 'assets.quiz', descKey: 'assets.quizDesc', accent: true },
+  { type: 'product', icon: Book, titleKey: 'assets.product', descKey: 'assets.productDesc' },
+  {
+    type: 'ad_creative',
+    icon: Megaphone,
+    titleKey: 'assets.adCreative',
+    descKey: 'assets.adCreativeDesc',
+    accent: true,
+  },
+]
+
+const ASSET_KIND = {
+  sales_page: 'html',
+  quiz: 'html',
+  product: 'html',
+  ad_creative: 'markdown',
+}
+
 export default function ProjectDetail() {
+  const t = useT()
   const { id } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
@@ -54,8 +94,8 @@ export default function ProjectDetail() {
 
   const [tab, setTab] = useState('analysis')
   const [analyzing, setAnalyzing] = useState(false)
-  const [generating, setGenerating] = useState({ sales_page: false, quiz: false })
-  const [selectedVersion, setSelectedVersion] = useState({ sales_page: null, quiz: null })
+  const [generating, setGenerating] = useState({})
+  const [selectedVersion, setSelectedVersion] = useState({})
 
   const [savingSettings, setSavingSettings] = useState(false)
   const [renameOpen, setRenameOpen] = useState(false)
@@ -132,7 +172,9 @@ export default function ProjectDetail() {
       setAssets((current) => [asset, ...current])
       setSelectedVersion((current) => ({ ...current, [type]: asset.id }))
       setTab(type)
-      toast.success(`${ASSET_LABEL[type]} generated (version ${asset.version}).`)
+      toast.success(
+        t('assets.generatedToast', { asset: t(ASSET_LABEL_KEY[type]), version: asset.version }),
+      )
     } catch (error) {
       toast.error(error.message)
     } finally {
@@ -196,13 +238,11 @@ export default function ProjectDetail() {
   /* ---------------------------------------------------------------- */
   /* Derived                                                           */
   /* ---------------------------------------------------------------- */
-  const byType = useMemo(
-    () => ({
-      sales_page: assets.filter((asset) => asset.type === 'sales_page'),
-      quiz: assets.filter((asset) => asset.type === 'quiz'),
-    }),
-    [assets],
-  )
+  const byType = useMemo(() => {
+    const grouped = { sales_page: [], quiz: [], product: [], ad_creative: [] }
+    for (const asset of assets) grouped[asset.type]?.push(asset)
+    return grouped
+  }, [assets])
 
   const activeAsset = (type) => {
     const list = byType[type]
@@ -356,7 +396,7 @@ export default function ProjectDetail() {
               )}
             >
               <item.icon className="h-4 w-4" />
-              {item.label}
+              {t(item.labelKey)}
               {item.id === 'sales_page' && byType.sales_page.length > 0 && (
                 <span className="rounded-full bg-ink-700 px-1.5 text-[11px] text-ink-200">
                   {byType.sales_page.length}
@@ -384,28 +424,20 @@ export default function ProjectDetail() {
               hasAssets={hasStaleAssets}
             />
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <GenerateCard
-                type="sales_page"
-                icon={FileText}
-                title="Sales page"
-                description="Long-form responsive page with headline, pains, desires, mechanism, offer stack, FAQ and CTAs."
-                count={byType.sales_page.length}
-                loading={generating.sales_page}
-                onGenerate={() => handleGenerate('sales_page')}
-                onOpen={() => setTab('sales_page')}
-              />
-              <GenerateCard
-                type="quiz"
-                icon={Puzzle}
-                title="Interactive quiz"
-                description="Multi-step quiz with weighted scoring, a personalised result and a CTA into the same offer."
-                accent
-                count={byType.quiz.length}
-                loading={generating.quiz}
-                onGenerate={() => handleGenerate('quiz')}
-                onOpen={() => setTab('quiz')}
-              />
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              {GENERATORS.map((generator) => (
+                <GenerateCard
+                  key={generator.type}
+                  icon={generator.icon}
+                  title={t(generator.titleKey)}
+                  description={t(generator.descKey)}
+                  accent={generator.accent}
+                  count={byType[generator.type].length}
+                  loading={Boolean(generating[generator.type])}
+                  onGenerate={() => handleGenerate(generator.type)}
+                  onOpen={() => setTab(generator.type)}
+                />
+              ))}
             </div>
 
             <AnalysisPanel analysis={project.analysis} />
@@ -426,7 +458,7 @@ export default function ProjectDetail() {
           )
         ))}
 
-      {(tab === 'sales_page' || tab === 'quiz') && (
+      {ASSET_KIND[tab] && (
         <AssetPanel
           type={tab}
           assets={byType[tab]}
@@ -567,20 +599,27 @@ function GenerateCard({
 }
 
 function AssetPanel({ type, assets, active, projectName, loading, onGenerate, onSelect }) {
+  const t = useT()
+  const generator = GENERATORS.find((item) => item.type === type)
+  const EmptyIcon = generator?.icon ?? FileText
+
   if (!assets.length) {
     return (
       <EmptyState
-        icon={type === 'quiz' ? Puzzle : FileText}
-        title={`No ${ASSET_LABEL[type].toLowerCase()} yet`}
-        description={
-          type === 'quiz'
-            ? 'Generate an interactive quiz from this project’s analysis. It will use the same promise, audience and offer as your sales page.'
-            : 'Generate a full sales page from this project’s analysis, ready to preview, copy or export.'
-        }
+        icon={EmptyIcon}
+        title={t(
+          {
+            sales_page: 'assets.emptySalesPage',
+            quiz: 'assets.emptyQuiz',
+            product: 'assets.emptyProduct',
+            ad_creative: 'assets.emptyAd',
+          }[type],
+        )}
+        description={t('assets.emptyBody')}
         action={
           <Button size="lg" onClick={onGenerate} loading={loading}>
             <Sparkles className="h-5 w-5" />
-            Generate {ASSET_LABEL[type].toLowerCase()}
+            {t('common.generate')}
           </Button>
         }
       />
@@ -622,8 +661,10 @@ function AssetPanel({ type, assets, active, projectName, loading, onGenerate, on
         <CodeStudio
           code={active.code}
           title={active.title}
-          downloadName={`${projectName}-${type === 'quiz' ? 'quiz' : 'sales-page'}-v${active.version}`}
-          meta={active.model ? `Generated with ${active.model}` : null}
+          kind={ASSET_KIND[type]}
+          printable={type === 'product'}
+          downloadName={`${projectName}-${type.replace('_', '-')}-v${active.version}`}
+          meta={active.model ? t('assets.generatedWith', { model: active.model }) : null}
         />
       )}
     </div>
